@@ -208,7 +208,7 @@ async function watchQueue(){
 }
 const FORM_URL='https://docs.google.com/forms/d/e/1FAIpQLSf9RwY_EAE6KwA-jn7nPnM1YfcVUOGpfXSV6egiB29Hxf0Qbw/formResponse';
 const FORM_FIELD='entry.632644792';
-const STATUS_URL=''; // Apps Script 웹 앱 주소를 배포 후 여기에 넣는다
+const STATUS_URL='https://script.google.com/macros/s/AKfycbyFf8YqS9ucOOtP1Ya3TaIWrl4hKOCmLM9Q3476ZmWDIDSBwMtIdPSoP21F1N2cGcw/exec'; // Apps Script 웹 앱 주소를 배포 후 여기에 넣는다
 const PKEY='deckreq_pending';
 const ALPH='ABCDEFGHJKMNPQRSTUVWXYZ23456789';
 function newCode(){const a=new Uint32Array(8);crypto.getRandomValues(a);let c='';a.forEach((v,i)=>{c+=ALPH[v%ALPH.length];if(i===3)c+='-'});return c}
