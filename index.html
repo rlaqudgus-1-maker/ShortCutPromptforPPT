@@ -215,34 +215,25 @@ function pending(){try{return JSON.parse(localStorage.getItem(PKEY)||'[]')}catch
 function setPending(l){try{localStorage.setItem(PKEY,JSON.stringify(l.slice(0,10)))}catch(e){}}
 function renderPend(){
   const l=pending().filter(x=>!x.done);const el=$('#pend');if(!el)return;
-  el.innerHTML=l.length?`<button class="ghost" id="pendgo" style="margin-top:10px">진행 중인 요청 ${esc(l[0].code)} 결과 보기</button>`:`<button class="ghost" id="lookgo" style="margin-top:10px">요청 코드로 결과 확인</button>`;
+  el.innerHTML=l.length?`<button class="ghost" id="pendgo" style="margin-top:10px">진행 중인 요청 결과 보기</button>`:'';
   if(l.length)$('#pendgo').onclick=()=>showWait(l[0].code,l[0].at);
-  else $('#lookgo').onclick=()=>showLook();
-}
-function showLook(){
-  $('#flow').innerHTML='';$('#prog').innerHTML='';
-  $('#stage').innerHTML=`<div class="wait"><div class="kick">결과 확인</div><div class="look"><input id="lc" placeholder="XXXX-XXXX" maxlength="9"><button class="btn main" id="lgo">확인</button><button class="ghost" id="lback">돌아가기</button></div><div class="status" id="lst"></div></div>`;
-  $('#lback').onclick=()=>render();
-  $('#lgo').onclick=()=>{let c=$('#lc').value.trim().toUpperCase().replace(/[^A-Z0-9]/g,'');if(c.length!==8){$('#lst').textContent='코드는 8자리임.';return}c=c.slice(0,4)+'-'+c.slice(4);showWait(c,Date.now())};
-  $('#lc').onkeydown=e=>{if(e.key==='Enter')$('#lgo').click()};
 }
 let pollT=null,tickT=null;
 function stopTimers(){clearTimeout(pollT);clearInterval(tickT)}
 function showWait(code,at){
   stopTimers();$('#flow').innerHTML='';$('#prog').innerHTML='';
   $('#stage').innerHTML=`<div class="wait" id="wait">
-   <div class="kick">요청 코드</div><div class="code">${esc(code)}</div>
-   <div class="row" style="margin-top:6px"><button class="btn" id="ccopy">코드 복사</button><button class="ghost" id="newreq">새 요청 쓰기</button></div>
+   <div class="kick">요청을 받았습니다</div>
+   <div class="row" style="margin-top:6px"><button class="ghost" id="newreq">새 요청 쓰기</button></div>
    <div class="think" id="think"><span id="tmsg">생각 중입니다</span><i>.</i><i>.</i><i>.</i></div>
    <div class="bar" id="bar"><b></b></div>
    <div class="mini" id="elapsed"></div><div class="mini" id="note"></div>
    <pre id="res" style="display:none"></pre>
    <div class="row" id="rrow" style="display:none"><button class="btn main" id="rcopy">프롬프트 복사</button><span class="status" id="rst" style="margin:0"></span></div></div>`;
-  $('#ccopy').onclick=async()=>{try{await navigator.clipboard.writeText(code);$('#note').textContent='코드를 복사함.'}catch(e){}};
   $('#newreq').onclick=()=>{stopTimers();st={i:0,a:{}};save();render()};
   const t0=at||Date.now();
   const tick=()=>{const s=Math.floor((Date.now()-t0)/1000);$('#elapsed').textContent=`경과 ${Math.floor(s/60)}분 ${String(s%60).padStart(2,'0')}초`;
-    if(s>180&&!$('#note').dataset.long){$('#note').dataset.long=1;$('#note').textContent='처리에 시간이 걸리고 있음. 창을 닫아도 되고, 이 코드로 나중에 결과를 확인할 수 있음.'}};
+    if(s>180&&!$('#note').dataset.long){$('#note').dataset.long=1;$('#note').textContent='처리에 시간이 걸리고 있음. 창을 닫아도 되고, 이 브라우저로 다시 오면 결과가 보임.'}};
   tick();tickT=setInterval(tick,1000);
   const MSG={received:'생각 중입니다',processing:'묘사를 고르고 고쳐 쓰는 중입니다',none:'요청을 찾는 중입니다'};
   const poll=async()=>{
@@ -266,8 +257,9 @@ function finish(code,prompt){
 function renderSum(){
   const code=st.code||(st.code=newCode(),save(),st.code);
   const text=compile(code);
+  const shown=text.replace(/^\[요청 코드 [^\]]*\]\n/,'');
   $('#stage').innerHTML=`<div class="sum" id="sum"><h2>요청 보내기</h2><div class="hint" style="color:var(--slate)">아래 내용이 그대로 전달된다. 위에서 '고치기'로 답을 바꿀 수 있다.</div>
-  <pre id="pre">${esc(text)}</pre>
+  <pre id="pre">${esc(shown)}</pre>
   <div class="up" style="margin-top:24px">
     <div class="kick" style="margin-bottom:8px">참조할 원문 파일 (선택)</div>
     <div class="hint" style="color:var(--slate);margin-bottom:12px">원문 파일은 공개되지 않아요. PDF, Word, PowerPoint, Excel, 한글, 텍스트, 이미지 / 파일당 10MB, 5개까지.</div>
