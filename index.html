@@ -159,8 +159,7 @@ function showWait(code,at){
    <div class="mini" id="rhint" style="display:none;color:var(--ice);margin-top:14px">아래 프롬프트를 복사해 본인 계정의 Claude Opus 5.5에 붙여 넣으시오.</div><div class="row" id="rrow" style="display:none"><button class="btn main" id="rcopy">프롬프트 복사</button><span class="status" id="rst" style="margin:0"></span></div></div>`;
   $('#newreq').onclick=()=>{stopTimers();st={i:0,a:{}};save();render()};
   const t0=at||Date.now();
-  const tick=()=>{const s=Math.floor((Date.now()-t0)/1000);$('#elapsed').textContent=`경과 ${Math.floor(s/60)}분 ${String(s%60).padStart(2,'0')}초`;
-    if(s>180&&!$('#note').dataset.long){$('#note').dataset.long=1;$('#note').textContent='처리에 시간이 걸리고 있음. 창을 닫아도 되고, 이 브라우저로 다시 오면 결과가 보임.'}};
+  const tick=()=>{const s=Math.floor((Date.now()-t0)/1000);$('#elapsed').textContent=`경과 ${Math.floor(s/60)}분 ${String(s%60).padStart(2,'0')}초`;};
   const STAGES=['해석 중','연산 중','결과 정리 중','생성 중'];
   const stage=()=>{const s=Math.floor((Date.now()-t0)/1000);const m=$('#tmsg');if(m&&!$('#think').classList.contains('stop'))m.textContent=STAGES[Math.floor(s/6)%STAGES.length]};
   tick();stage();tickT=setInterval(()=>{tick();stage()},1000);
