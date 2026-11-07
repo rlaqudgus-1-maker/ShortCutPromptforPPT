@@ -70,15 +70,39 @@ textarea::placeholder{color:#56627C}
 .mini{font-size:14px;color:var(--slate);margin-top:10px;font-variant-numeric:tabular-nums}
 .look{margin-top:28px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .look input{font:inherit;font-size:15px;color:var(--ice);background:var(--night);border:0;outline:0;padding:10px 14px;width:180px;letter-spacing:.06em;text-transform:uppercase}
+.layout{display:grid;grid-template-columns:minmax(0,760px);justify-content:center;gap:48px}
+.wrap{max-width:none;margin:0}
+.tips{background:var(--deep);padding:28px 26px;align-self:start}
+.tips .kick{margin-bottom:10px}
+.tips h3{font-size:19px;font-weight:700;letter-spacing:-.01em;margin-bottom:18px;line-height:1.4}
+.tips ol{list-style:none;counter-reset:t}
+.tips li{counter-increment:t;display:grid;grid-template-columns:28px 1fr;gap:4px 10px;margin-bottom:18px;font-size:15px;line-height:1.6}
+.tips li::before{content:counter(t);font-weight:700;color:var(--violet);font-variant-numeric:tabular-nums}
+.tips li b{display:block;font-weight:600}
+.tips li span{color:var(--slate);font-size:14px}
+.tips .note{font-size:13.5px;color:var(--slate);margin-top:4px}
+@media (min-width:1180px){.layout{grid-template-columns:minmax(0,760px) 300px}.tips{position:sticky;top:72px}}
 </style>
 </head>
 <body>
+<div class="layout">
 <div class="wrap">
   <div class="kick">PROMPT LLM</div>
   <h1>덱 요청서</h1><div class="mini" style="margin:-2px 0 6px;color:var(--ice)">Claude Opus 5.5에 최적화됨.</div><div class="mini" style="margin:0 0 4px">결과가 나오면 본인 계정의 Claude Opus 5.5에 복사해 붙여 넣으시오.</div><div style="margin:14px 0 6px"><div class="kick" style="margin-bottom:8px">모델 선택</div><div class="chips"><button class="mpick" id="modelpick" aria-pressed="true">김병현 제작 모델 V1</button></div></div><div id="pend" style="margin:6px 0 32px"></div>
   <div class="prog" id="prog"></div>
   <div id="flow"></div>
   <div id="stage"></div>
+</div>
+<aside class="tips" aria-label="결과물을 더 좋게 하는 법">
+  <div class="kick">TIP</div>
+  <h3>결과물을 더 좋게 하는 법</h3>
+  <ol>
+    <li><div><b>발표 내용을 미리 적어 두세요</b><span>주제, 하고 싶은 말, 장 순서를 먼저 정리합니다. 굿노트 필기나 손글씨 사진도 괜찮습니다.</span></div></li>
+    <li><div><b>본인 LLM으로 마크다운 정리</b><span>그 메모를 본인이 쓰는 LLM(Claude, ChatGPT 등)에 넣고 마크다운(.md) 형식으로 정리해 저장합니다.</span></div></li>
+    <li><div><b>마크다운 파일을 첨부하세요</b><span>요청을 보낼 때 그 .md 파일을 참조 원문으로 첨부하면 구성과 내용이 더 정확한 결과가 나옵니다.</span></div></li>
+  </ol>
+  <div class="note">첨부한 원문 파일은 공개되지 않습니다.</div>
+</aside>
 </div>
 <script>
 const Q=[
