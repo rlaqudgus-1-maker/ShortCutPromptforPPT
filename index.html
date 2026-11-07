@@ -54,7 +54,8 @@ textarea::placeholder{color:#56627C}
 .prog i.f{background:var(--slate)}
 .prog i.c{background:var(--violet)}
 
-.wait{margin-top:24px;background:var(--deep);padding:36px 32px}
+.wait{margin-top:24px;background:var(--deep);padding:36px 32px;min-width:0;max-width:100%;overflow:hidden}
+.wait pre{font:inherit;font-size:15px;line-height:1.7;white-space:pre-wrap;overflow-wrap:anywhere;word-break:normal;background:var(--night);padding:20px 22px;margin:18px 0 0;max-height:520px;overflow:auto;max-width:100%}
 .code{font-size:44px;font-weight:700;letter-spacing:.08em;font-variant-numeric:tabular-nums;margin:6px 0 4px}
 .think{font-size:24px;font-weight:600;margin-top:28px;display:flex;align-items:baseline;gap:2px}
 .think i{font-style:normal;opacity:.15;animation:dot 1.4s infinite}
@@ -197,7 +198,7 @@ function renderQueue(){
   if(!QLIST.length){el.innerHTML='';return}
   el.innerHTML='<div class="qh">보낸 요청</div>'+QLIST.map(d=>{const v=d.data();const t=(v.title||'').slice(0,40);let when='';try{const d=new Date(v.createdAt);when=`${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`}catch(e){}const stt=v.status==='done'?'<b class="okc">완성</b>':'대기 중';return `<button class="qi" data-id="${esc(d.id)}"><span>${esc(when)}</span><span>${esc(t)}</span><span>${stt}</span></button>`}).join('');
   el.querySelectorAll('.qi').forEach(bn=>bn.onclick=()=>{const d=QLIST.find(x=>x.id===bn.dataset.id);if(!d)return;const v=d.data();
-    if(v.status==='done'&&v.prompt){showPrompt(v.prompt,v.sources?('쓴 원문: '+v.sources):'', '대화방에서 만든 프롬프트');window.scrollTo({top:$('#result').offsetTop-24,behavior:'smooth'})}
+    if(v.status==='done'&&v.prompt){showPrompt(v.prompt,'', '대화방에서 만든 프롬프트');window.scrollTo({top:$('#result').offsetTop-24,behavior:'smooth'})}
     else{$('#sstatus').textContent='아직 대기 중. 대화방에서 "요청 확인"이라고 하면 처리된다.'}});
 }
 async function watchQueue(){
@@ -230,7 +231,7 @@ function showWait(code,at){
    <div class="bar" id="bar"><b></b></div>
    <div class="mini" id="elapsed"></div><div class="mini" id="note"></div>
    <pre id="res" style="display:none"></pre>
-   <div class="mini" id="rhint" style="display:none;color:var(--ice)">아래 프롬프트를 복사해 본인 계정의 Claude Opus 5.5에 붙여 넣으시오.</div><div class="row" id="rrow" style="display:none"><button class="btn main" id="rcopy">프롬프트 복사</button><span class="status" id="rst" style="margin:0"></span></div></div>`;
+   <div class="mini" id="rhint" style="display:none;color:var(--ice);margin-top:14px">아래 프롬프트를 복사해 본인 계정의 Claude Opus 5.5에 붙여 넣으시오.</div><div class="row" id="rrow" style="display:none"><button class="btn main" id="rcopy">프롬프트 복사</button><span class="status" id="rst" style="margin:0"></span></div></div>`;
   $('#newreq').onclick=()=>{stopTimers();st={i:0,a:{}};save();render()};
   const t0=at||Date.now();
   const tick=()=>{const s=Math.floor((Date.now()-t0)/1000);$('#elapsed').textContent=`경과 ${Math.floor(s/60)}분 ${String(s%60).padStart(2,'0')}초`;
@@ -250,7 +251,7 @@ function showWait(code,at){
   poll();
 }
 function finish(code,prompt){
-  stopTimers();$('#tmsg').textContent='완성되었습니다';$('#think').classList.add('stop');$('#bar').classList.add('stop');$('#note').textContent='';
+  stopTimers();$('#elapsed').textContent='';$('#tmsg').textContent='완성되었습니다';$('#think').classList.add('stop');$('#bar').classList.add('stop');$('#note').textContent='';
   $('#rhint').style.display='';const res=$('#res');res.style.display='';res.textContent=prompt;$('#rrow').style.display='';
   $('#rcopy').onclick=async()=>{try{await navigator.clipboard.writeText(prompt);$('#rst').textContent='복사함.'}catch(e){const r=document.createRange();r.selectNodeContents(res);const sel=getSelection();sel.removeAllRanges();sel.addRange(r);$('#rst').textContent='선택해 둠. ⌘C로 복사할 것.'}};
   setPending(pending().map(x=>x.code===code?{...x,done:true}:x));
