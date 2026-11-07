@@ -268,13 +268,38 @@ function renderSum(){
   const text=compile(code);
   $('#stage').innerHTML=`<div class="sum" id="sum"><h2>요청 보내기</h2><div class="hint" style="color:var(--slate)">아래 내용이 그대로 전달된다. 위에서 '고치기'로 답을 바꿀 수 있다.</div>
   <pre id="pre">${esc(text)}</pre>
+  <div class="up" style="margin-top:24px">
+    <div class="kick" style="margin-bottom:8px">참조할 원문 파일 (선택)</div>
+    <div class="hint" style="color:var(--slate);margin-bottom:12px">덱에 들어갈 자료가 있으면 보내 주세요. 파일은 비공개 보관함에만 저장되고 공개되지 않으며, 다른 요청자는 볼 수 없어요. 디자인 프롬프트를 만드는 데만 써요. PDF, Word, PowerPoint, Excel, 한글, 텍스트, 이미지 / 파일당 10MB, 5개까지.</div>
+    <label class="btn" style="display:inline-block;cursor:pointer">파일 고르기<input type="file" id="files" multiple accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.csv,.txt,.md,.hwp,.hwpx,.png,.jpg,.jpeg,.webp" style="display:none"></label>
+    <div class="mini" id="flist"></div>
+  </div>
   <div class="row"><button class="btn main" id="send">보내기</button><button class="ghost" id="reset">처음부터</button></div>
   <div class="status" id="status"></div></div>`;
   const S=$('#status'),send=$('#send');
+  let picked=[];
+  const fin=$('#files');
+  if(!STATUS_URL){fin.disabled=true;$('#flist').textContent='파일 받기는 준비 중이에요.'}
+  fin.onchange=()=>{
+    const ok=/\.(pdf|docx?|pptx?|xlsx?|csv|txt|md|hwp|hwpx|png|jpe?g|webp)$/i;
+    picked=[...fin.files].filter(f=>ok.test(f.name)&&f.size<=10*1024*1024).slice(0,5);
+    const skipped=fin.files.length-picked.length;
+    $('#flist').textContent=picked.length?picked.map(f=>`${f.name} (${(f.size/1048576).toFixed(1)}MB)`).join(' · ')+(skipped?` / ${skipped}개는 형식이나 크기 때문에 뺌`:''):(skipped?'보낼 수 있는 파일이 없음':'');
+  };
+  const b64=f=>new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(String(r.result).split(',')[1]||'');r.onerror=rej;r.readAsDataURL(f)});
   send.onclick=async()=>{
     send.disabled=true;S.textContent='보내는 중';
     try{
-      await fetch(FORM_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({[FORM_FIELD]:text}).toString()});
+      let full=text;
+      if(picked.length&&STATUS_URL){
+        S.textContent='파일을 올리는 중';
+        const files=[];for(const f of picked)files.push({name:f.name,type:f.type,data:await b64(f)});
+        let saved=0;
+        try{const r=await fetch(STATUS_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({code,files})});const j=await r.json();saved=j.ok?j.saved:0}catch(e){saved=0}
+        if(!saved){S.textContent='파일을 올리지 못함. 파일 없이 보내려면 파일 선택을 지우고 다시 누를 것.';send.disabled=false;return}
+        full=text.replace('\n[덱 요청서',`\n[첨부 원문 ${saved}개]\n[덱 요청서`);
+      }
+      await fetch(FORM_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({[FORM_FIELD]:full}).toString()});
       const at=Date.now();setPending([{code,at,done:false},...pending().filter(x=>x.code!==code)]);
       st={i:0,a:{}};save();showWait(code,at);
     }catch(e){S.textContent='보내지 못함. 인터넷 연결을 확인하고 다시 누를 것.';send.disabled=false}
