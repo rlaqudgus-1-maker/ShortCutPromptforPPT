@@ -259,7 +259,7 @@ function renderSum(){
   const code=st.code||(st.code=newCode(),save(),st.code);
   const text=compile(code);
   const shown=text.replace(/^\[요청 코드 [^\]]*\]\n/,'');
-  $('#stage').innerHTML=`<div class="sum" id="sum"><h2>요청 보내기</h2><div class="hint" style="color:var(--slate)">아래 내용이 그대로 전달된다. 위에서 '고치기'로 답을 바꿀 수 있다.</div>
+  $('#stage').innerHTML=`<div class="sum" id="sum"><h2>요청 보내기</h2>
   <pre id="pre">${esc(shown)}</pre>
   <div class="up" style="margin-top:24px">
     <div class="kick" style="margin-bottom:8px">참조할 원문 파일 (선택)</div>
