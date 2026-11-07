@@ -113,7 +113,7 @@ const Q=[
  {k:'data',t:'들어갈 숫자, 자료, 출처는?',h:'실제 값이 있으면 그대로, 없으면 자리표시자로 둔다.',chips:['값 있음','자리표시자로','출처 찾아 줘'],ph:'예) 2021~2025 면적 412, 455, 508, 566, 628 (만 ㎡), 자료: 국토교통부',req:false,tall:true},
  {k:'mood',t:'어떤 분위기였으면 하나요?',h:'말로 적는다.',chips:['다크','라이트','차분하게','강하게','고급스럽게','데이터 중심'],ph:'예) 투자 리서치처럼 단단하고 어두운 화면, 숫자가 먼저 보이게',req:false},
  {k:'brand',t:'강조색, 로고, 글꼴 요구는?',h:'강조색은 화면마다 한 곳에 쓴다. 정해진 브랜드가 없으면 비워 둔다.',chips:['바이올렛 #9B8CFF','루비','알아서 골라 줘','로고 있음'],ph:'예) A.donis Research 로고, 제목은 명조',req:false},
- {k:'rules',t:'꼭 지킬 것과 피할 것은?',h:'기본 규칙(테두리·띠 배경·점 질감·둥근 모서리 금지, 차트마다 출처 줄, 결론형 제목, 한국어 문어체)은 이미 들어간다. 그 밖의 것만 적는다.',chips:['차트 한 장에 하나','숫자 크게','글 최소','이미지 모델 사용'],ph:'예) 실명 대신 자리표시자, 2쪽 이내',req:false}
+ {k:'rules',t:'꼭 지킬 것과 피할 것은?',h:'따로 적지 않으면 기본값(각진 사각형, 테두리·띠 배경·점 질감 없음, 차트마다 출처 줄, 결론형 제목, 한국어 문어체)으로 만든다. 바꾸고 싶은 것과 꼭 피할 것을 적는다.',chips:['차트 한 장에 하나','숫자 크게','글 최소','이미지 모델 사용'],ph:'예) 실명 대신 자리표시자, 2쪽 이내',req:false}
 ];
 const KEY='deckreq_v1';
 let st={i:0,a:{}};
@@ -205,16 +205,38 @@ function finish(code,prompt){
   $('#rcopy').onclick=async()=>{try{await navigator.clipboard.writeText(prompt);$('#rst').textContent='복사함.'}catch(e){const r=document.createRange();r.selectNodeContents(res);const sel=getSelection();sel.removeAllRanges();sel.addRange(r);$('#rst').textContent='선택해 둠. ⌘C로 복사할 것.'}};
   setPending(pending().map(x=>x.code===code?{...x,done:true}:x));
 }
+const JUNK=/^(?:[ㄱ-ㅎㅏ-ㅣ\s.,!?~ㅋㅎㅠㅜ]+|test|testing|테스트|테스트용|asdf|qwer|1234|아무거나|몰라|ㅁㄴㅇㄹ|ㅇㅇ|\d+|(.)\1+)$/i;
+const OFF=/(점심|저녁|메뉴|맛집|연애|고백|해킹|비밀번호|크랙|불법|도박|토토|로또 번호|성인|야한|19금|코드 짜|코딩해|프로그램 짜|숙제 답|과제 대신|시험 답|정답 알려|주식 추천|종목 추천|코인 추천|번역해 줘|번역해줘|소설 써|시 써|노래 가사|이력서 대신|자소서 써)/;
+const ONTOPIC=/(발표|덱|슬라이드|ppt|피피티|파워포인트|키노트|프레젠테이션|제안서|보고서|리포트|강의|수업|세미나|브리핑|자료|논문|요약|사례|포럼|공모|심사|ir|피치|투자|사업|계획서|소개서|표지|포스터|웹사이트|방송|화면|카드뉴스|발제|학회|컨퍼런스|교육|설명회|시황|리서치|분석)/i;
+function clean(t){return String(t||'').replace(/[\s\p{P}\p{S}]+/gu,'')}
+function isJunk(t){const c=clean(t);return !c||c.length<2||JUNK.test(c)}
+function topicGate(){
+  const w=ans('what'),p=ans('purpose');
+  const wText=w.text.trim(),wChips=w.chips.filter(c=>c!=='기타');
+  const all=Q.map(q=>ans(q.k).text).join(' ');
+  if(OFF.test(all))return{i:0,msg:'발표·자료 제작과 관련 없는 내용이 들어 있어요. 발표 덱, 보고서, 강의 자료처럼 만들 자료에 대한 요청만 받아요.'};
+  if(!wChips.length&&isJunk(wText))return{i:0,msg:'1번에 무엇을 만드는지 적어 주세요. 예) 투자제안서 발표 덱, 논문 사례 요약 발표'};
+  if(wText&&!isJunk(wText)&&!wChips.length&&!ONTOPIC.test(wText))return{i:0,msg:'발표·자료 제작과 관련된 주제만 받아요. 1번에 만들 자료의 종류와 주제를 적어 주세요.'};
+  if(!p.chips.length&&isJunk(p.text))return{i:1,msg:'2번에 누가 어떻게 보는지 적어 주세요. 예) 강의실에서 학생들 앞에서 발표'};
+  const filled=Q.filter(q=>{const a=ans(q.k);return a.chips.length||!isJunk(a.text)}).length;
+  if(filled<3)return{i:0,msg:'답이 너무 적어요. 최소 세 개 질문에 의미 있는 답을 적어 주세요.'};
+  return null;
+}
 function renderSum(){
+  const g=topicGate();
+  if(g){$('#stage').innerHTML=`<div class="sum" id="sum"><h2>요청을 보낼 수 없어요</h2><div class="status" style="margin-top:10px">${esc(g.msg)}</div><div class="row"><button class="btn main" id="fix">${g.i+1}번 고치기</button><button class="ghost" id="reset">처음부터</button></div></div>`;
+    $('#fix').onclick=()=>{st.i=g.i;save();render()};
+    $('#reset').onclick=()=>{if(confirm('답을 모두 지우고 처음부터 할까요?')){st={i:0,a:{}};save();render()}};
+    return}
   const code=st.code||(st.code=newCode(),save(),st.code);
   const text=compile(code);
   const shown=text.replace(/^\[요청 코드 [^\]]*\]\n/,'');
   $('#stage').innerHTML=`<div class="sum" id="sum"><h2>요청 보내기</h2>
   <pre id="pre">${esc(shown)}</pre>
   <div class="up" style="margin-top:24px">
-    <div class="kick" style="margin-bottom:8px">참조할 원문 파일 (선택)</div>
-    <div class="hint" style="color:var(--slate);margin-bottom:12px">원문 파일은 공개되지 않아요. PDF, Word, PowerPoint, Excel, 한글, 텍스트, 이미지 / 파일당 10MB, 5개까지.</div>
-    <label class="btn" style="display:inline-block;cursor:pointer">파일 고르기<input type="file" id="files" multiple accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.csv,.txt,.md,.hwp,.hwpx,.png,.jpg,.jpeg,.webp" style="display:none"></label>
+    <div class="kick" style="margin-bottom:8px">참조할 원문 파일 (선택, .md만)</div>
+    <div class="hint" style="color:var(--slate);margin-bottom:12px">마크다운(.md) 파일만 받아요. 원문 파일은 공개되지 않아요. 파일당 10MB, 5개까지.</div>
+    <label class="btn" style="display:inline-block;cursor:pointer">파일 고르기<input type="file" id="files" multiple accept=".md,.markdown,text/markdown" style="display:none"></label>
     <div class="mini" id="flist"></div>
   </div>
   <div class="row"><button class="btn main" id="send">보내기</button><button class="ghost" id="reset">처음부터</button></div>
@@ -224,10 +246,10 @@ function renderSum(){
   const fin=$('#files');
   if(!STATUS_URL){fin.disabled=true;$('#flist').textContent='파일 받기는 준비 중이에요.'}
   fin.onchange=()=>{
-    const ok=/\.(pdf|docx?|pptx?|xlsx?|csv|txt|md|hwp|hwpx|png|jpe?g|webp)$/i;
+    const ok=/\.(md|markdown)$/i;
     picked=[...fin.files].filter(f=>ok.test(f.name)&&f.size<=10*1024*1024).slice(0,5);
     const skipped=fin.files.length-picked.length;
-    $('#flist').textContent=picked.length?picked.map(f=>`${f.name} (${(f.size/1048576).toFixed(1)}MB)`).join(' · ')+(skipped?` / ${skipped}개는 형식이나 크기 때문에 뺌`:''):(skipped?'보낼 수 있는 파일이 없음':'');
+    $('#flist').textContent=picked.length?picked.map(f=>`${f.name} (${(f.size/1048576).toFixed(1)}MB)`).join(' · ')+(skipped?` / ${skipped}개는 형식이나 크기 때문에 뺌`:''):(skipped?'마크다운(.md) 파일만 보낼 수 있어요':'');
   };
   const b64=f=>new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(String(r.result).split(',')[1]||'');r.onerror=rej;r.readAsDataURL(f)});
   send.onclick=async()=>{
