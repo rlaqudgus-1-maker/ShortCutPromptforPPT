@@ -3,7 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>덱 요청서</title>
+<title>PROMPT LLM</title>
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta property="og:title" content="PROMPT LLM">
+<meta property="og:description" content="질문 여덟 개로 받는 디자인 프롬프트. 김병현 제작 모델 V1">
+<meta property="og:image" content="og.jpg">
 <style>
 @font-face{font-family:'InstrumentLocal';src:url('instrument-sans.woff2') format('woff2');font-weight:400 700;font-display:block}
 @font-face{font-family:'WantedLocal';src:url('wanted-sans.woff2') format('woff2');font-weight:100 900;font-display:block}
@@ -82,13 +87,15 @@ textarea::placeholder{color:#56627C}
 .tips li span{color:var(--slate);font-size:14px}
 .tips .note{font-size:13.5px;color:var(--slate);margin-top:4px}
 @media (min-width:1180px){.layout{grid-template-columns:minmax(0,760px) 300px}.tips{position:sticky;top:72px}}
+.brand{display:flex;align-items:center;gap:16px;margin-bottom:6px}
+.brand img{width:56px;height:56px;display:block}
+.brand h1{margin:2px 0 0}
 </style>
 </head>
 <body>
 <div class="layout">
 <div class="wrap">
-  <div class="kick">PROMPT LLM</div>
-  <h1>덱 요청서</h1><div class="mini" style="margin:-2px 0 6px;color:var(--ice)">Claude Opus 5.5에 최적화됨.</div><div class="mini" style="margin:0 0 4px">결과가 나오면 본인 계정의 Claude Opus 5.5에 복사해 붙여 넣으시오.</div><div style="margin:14px 0 6px"><div class="kick" style="margin-bottom:8px">모델 선택</div><div class="chips"><button class="mpick" id="modelpick" aria-pressed="true">김병현 제작 모델 V1</button></div></div><div id="pend" style="margin:6px 0 32px"></div>
+  <div class="brand"><img src="logo.png" alt="" width="56" height="56"><div><div class="kick">DECK PROMPT</div><h1>PROMPT LLM</h1></div></div><div class="mini" style="margin:-2px 0 6px;color:var(--ice)">Claude Opus 5.5에 최적화됨.</div><div class="mini" style="margin:0 0 4px">결과가 나오면 본인 계정의 Claude Opus 5.5에 복사해 붙여 넣으시오.</div><div style="margin:14px 0 6px"><div class="kick" style="margin-bottom:8px">모델 선택</div><div class="chips"><button class="mpick" id="modelpick" aria-pressed="true">김병현 제작 모델 V1</button></div></div><div id="pend" style="margin:6px 0 32px"></div>
   <div class="prog" id="prog"></div>
   <div id="flow"></div>
   <div id="stage"></div>
@@ -150,7 +157,7 @@ function renderQ(){
 }
 function compile(code){
   const d=new Date();const ds=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-  let s=`[요청 코드 ${code||''}]\n[덱 요청서 ${ds}]
+  let s=`[요청 코드 ${code||''}]\n[PROMPT LLM 요청 ${ds}]
 `;
   Q.forEach((q,j)=>{const v=fmt(q.k);s+=`\n${j+1}. ${q.t}\n${v||'(비워 둠, 알아서 제안)'}\n`});
   return s;
@@ -262,7 +269,7 @@ function renderSum(){
         let saved=0;
         try{const r=await fetch(STATUS_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({code,files})});const j=await r.json();saved=j.ok?j.saved:0}catch(e){saved=0}
         if(!saved){S.textContent='파일을 올리지 못함. 파일 없이 보내려면 파일 선택을 지우고 다시 누를 것.';send.disabled=false;return}
-        full=text.replace('\n[덱 요청서',`\n[첨부 원문 ${saved}개]\n[덱 요청서`);
+        full=text.replace("\n[PROMPT LLM 요청",`\n[첨부 원문 ${saved}개]\n[PROMPT LLM 요청`);
       }
       await fetch(FORM_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({[FORM_FIELD]:full}).toString()});
       const at=Date.now();setPending([{code,at,done:false},...pending().filter(x=>x.code!==code)]);
