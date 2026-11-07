@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>덱 요청서</title>
+<style>
+@font-face{font-family:'InstrumentLocal';src:url('instrument-sans.woff2') format('woff2');font-weight:400 700;font-display:block}
+@font-face{font-family:'WantedLocal';src:url('wanted-sans.woff2') format('woff2');font-weight:100 900;font-display:block}
+:root{--night:#0E131C;--deep:#1A2232;--steel:#2A3550;--slate:#8EA2C8;--ice:#E8EEF8;--violet:#9B8CFF}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--night);color:var(--ice)}
+body{font-family:'InstrumentLocal','WantedLocal',sans-serif;font-size:17px;line-height:1.6;-webkit-font-smoothing:antialiased;padding:72px 24px 160px}
+.wrap{max-width:760px;margin:0 auto}
+.kick{font-size:13px;letter-spacing:.14em;color:var(--slate);font-weight:600}
+h1{font-size:40px;font-weight:700;letter-spacing:-.02em;margin:10px 0 8px}
+.lead{color:var(--slate);margin-bottom:48px}
+.done{display:grid;grid-template-columns:44px 1fr auto;gap:4px 16px;padding:18px 0;align-items:start}
+.done .n{font-weight:700;color:var(--slate);font-variant-numeric:tabular-nums}
+.done .q{font-size:14px;color:var(--slate)}
+.done .a{grid-column:2;white-space:pre-wrap;word-break:break-word}
+.done .a.empty{color:#56627C}
+.done button{grid-row:1/3;grid-column:3}
+.cur{margin-top:24px;background:var(--deep);padding:32px 32px 28px}
+.cur .n{font-size:14px;color:var(--slate);font-weight:600;font-variant-numeric:tabular-nums}
+.cur h2{font-size:26px;font-weight:700;letter-spacing:-.01em;margin:6px 0 6px}
+.cur .hint{font-size:14.5px;color:var(--slate);margin-bottom:18px;white-space:pre-line}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.chip{font:inherit;font-size:15px;background:var(--steel);color:var(--ice);border:0;padding:8px 14px;cursor:pointer}
+.chip.on{background:var(--violet);color:var(--night);font-weight:600}
+textarea{width:100%;min-height:96px;resize:vertical;font:inherit;color:var(--ice);background:var(--night);border:0;outline:0;padding:14px 16px;line-height:1.6}
+textarea:focus{background:#0A0E15}
+textarea::placeholder{color:#56627C}
+.row{display:flex;gap:10px;align-items:center;margin-top:16px;flex-wrap:wrap}
+.btn{font:inherit;font-size:15px;font-weight:600;border:0;padding:10px 18px;cursor:pointer;background:var(--steel);color:var(--ice)}
+.btn.main{background:var(--violet);color:var(--night)}
+.btn:disabled{opacity:.4;cursor:default}
+.ghost{font:inherit;font-size:14px;background:none;border:0;color:var(--slate);cursor:pointer;padding:2px 0}
+.ghost:hover{color:var(--ice)}
+.keys{font-size:13px;color:#56627C;margin-left:auto}
+.sum{margin-top:24px;background:var(--deep);padding:32px}
+.sum h2{font-size:26px;font-weight:700;margin-bottom:6px}
+.sum pre{font:inherit;font-size:15px;white-space:pre-wrap;word-break:break-word;background:var(--night);padding:18px 20px;margin:16px 0 0;max-height:420px;overflow:auto}
+.meta{font-size:13.5px;color:var(--slate);margin-top:8px;font-variant-numeric:tabular-nums}
+.meta.over{color:var(--violet)}
+.status{font-size:15px;margin-top:14px;min-height:24px}
+.qh{font-size:13px;letter-spacing:.12em;color:var(--slate);margin:36px 0 8px;font-weight:600}
+.qi{display:grid;grid-template-columns:110px 1fr 70px;gap:12px;width:100%;text-align:left;font:inherit;font-size:15px;color:var(--ice);background:var(--night);border:0;padding:12px 16px;margin-bottom:6px;cursor:pointer}
+.qi:hover{background:#0A0E15}
+.qi span:first-child{color:var(--slate);font-variant-numeric:tabular-nums}
+.okc{color:var(--violet)}
+.prog{display:flex;gap:6px;margin:0 0 8px}
+.prog i{flex:1;height:4px;background:var(--steel)}
+.prog i.f{background:var(--slate)}
+.prog i.c{background:var(--violet)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="kick">DECK REQUEST</div>
+  <h1>덱 요청서</h1>
+  <p class="lead">질문 여덟 개에 하나씩 답하면 아래로 쌓인다. 마지막에 정리된 요청을 Claude로 넘기면, 매체와 목적에 맞는 사조를 골라 실제 묘사문을 고쳐 쓴 영문 디자인 프롬프트를 받을 수 있다.</p>
+  <div class="prog" id="prog"></div>
+  <div id="flow"></div>
+  <div id="stage"></div>
+</div>
+<script>
+const Q=[
+ {k:'what',t:'무엇을 만드나요?',h:'종류를 고르고 제목이나 주제를 적는다.',chips:['발표 덱','읽는 자료','방송 화면','웹사이트','표지·포스터','보고서','기타'],ph:'예) 투자제안서, 전공유연화 성과포럼 발표',req:true},
+ {k:'purpose',t:'누가, 어떻게 보고, 보고 나서 무엇을 하나요?',h:'청중, 보는 방식(발표를 들으며 / 혼자 읽음 / 인쇄 / 화면 송출), 보고 난 뒤의 행동.',chips:['무대 발표','혼자 읽음','심사·평가','투자 유치','의사결정','정기 보고','강의','방송'],ph:'예) 심사위원 5명이 점수표를 옆에 두고 혼자 읽음. 점수를 매김.',req:true},
+ {k:'size',t:'분량과 형식은?',h:'장 수, 발표 시간, 비율, 마감.',chips:['16:9','4:3','세로 A4','1920×1080'],ph:'예) 9장, 10분, 12월 4일 발표',req:false},
+ {k:'slides',t:'장마다 무엇이 들어가나요?',h:'한 줄에 한 장씩. 역할, 결론 문장, 보여 줄 방식(차트·표·숫자·면·글).\n모르면 비워 두면 구성을 제안받는다.',chips:[],ph:'1 표지: 제목, 이름\n2 시장: 수도권 저온 물류 면적이 5년간 연 11% 늘어남, 막대 차트\n3 ...',req:false,tall:true},
+ {k:'data',t:'들어갈 숫자, 자료, 출처는?',h:'실제 값이 있으면 그대로, 없으면 자리표시자로 둔다.',chips:['값 있음','자리표시자로','출처 찾아 줘'],ph:'예) 2021~2025 면적 412, 455, 508, 566, 628 (만 ㎡), 자료: 국토교통부',req:false,tall:true},
+ {k:'mood',t:'어떤 분위기였으면 하나요?',h:'말로 적는다. 사조는 매체와 목적에 맞게 자동으로 고른다.',chips:['다크','라이트','차분하게','강하게','고급스럽게','데이터 중심'],ph:'예) 투자 리서치처럼 단단하고 어두운 화면, 숫자가 먼저 보이게',req:false},
+ {k:'brand',t:'강조색, 로고, 글꼴 요구는?',h:'강조색은 화면마다 한 곳에 쓴다. 정해진 브랜드가 없으면 비워 둔다.',chips:['바이올렛 #9B8CFF','루비','묘사에서 고르기','로고 있음'],ph:'예) A.donis Research 로고, 제목은 명조',req:false},
+ {k:'rules',t:'꼭 지킬 것과 피할 것은?',h:'기본 규칙(테두리·띠 배경·점 질감·둥근 모서리 금지, 차트마다 출처 줄, 결론형 제목, 한국어 문어체)은 이미 들어간다. 그 밖의 것만 적는다.',chips:['차트 한 장에 하나','숫자 크게','글 최소','이미지 모델 사용'],ph:'예) 실명 대신 자리표시자, 2쪽 이내',req:false}
+];
+const KEY='deckreq_v1';
+let st={i:0,a:{}};
+try{const s=JSON.parse(localStorage.getItem(KEY)||'null');if(s&&s.a)st=s}catch(e){}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(st))}catch(e){}};
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function ans(k){return st.a[k]||{chips:[],text:''}}
+function fmt(k){const a=ans(k);const p=[];if(a.chips.length)p.push(a.chips.join(', '));if(a.text.trim())p.push(a.text.trim());return p.join('\n')}
+function prog(){$('#prog').innerHTML=Q.map((q,j)=>`<i class="${j<st.i?'f':j===st.i?'c':''}"></i>`).join('')}
+function render(){
+  prog();
+  $('#flow').innerHTML=Q.slice(0,st.i).map((q,j)=>{const v=fmt(q.k);return `<div class="done"><span class="n">${String(j+1).padStart(2,'0')}</span><span class="q">${esc(q.t)}</span><span class="a ${v?'':'empty'}">${v?esc(v):'비워 둠'}</span><button class="ghost" data-edit="${j}">고치기</button></div>`}).join('');
+  document.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>{st.i=+b.dataset.edit;save();render()});
+  if(st.i<Q.length) renderQ(); else renderSum();
+}
+function renderQ(){
+  const q=Q[st.i],a=ans(q.k);
+  $('#stage').innerHTML=`<div class="cur"><div class="n">${String(st.i+1).padStart(2,'0')} / 08</div><h2>${esc(q.t)}</h2><div class="hint">${esc(q.h)}</div>
+  ${q.chips.length?`<div class="chips">${q.chips.map(c=>`<button class="chip ${a.chips.includes(c)?'on':''}" data-c="${esc(c)}">${esc(c)}</button>`).join('')}</div>`:''}
+  <textarea id="ta" placeholder="${esc(q.ph)}" style="min-height:${q.tall?180:96}px">${esc(a.text)}</textarea>
+  <div class="row"><button class="btn main" id="next">${st.i===Q.length-1?'마치기':'다음'}</button>${st.i>0?'<button class="btn" id="back">이전</button>':''}${q.req?'':'<button class="ghost" id="skip">건너뛰기</button>'}<span class="keys">Enter 다음 · Shift+Enter 줄바꿈</span></div></div>`;
+  const ta=$('#ta');
+  const keep=()=>{st.a[q.k]={chips:[...document.querySelectorAll('.chip.on')].map(b=>b.dataset.c),text:ta.value};save()};
+  document.querySelectorAll('.chip').forEach(b=>b.onclick=()=>{b.classList.toggle('on');keep()});
+  ta.oninput=keep;
+  const go=()=>{keep();if(q.req&&!fmt(q.k)){ta.focus();ta.placeholder='이 질문은 답이 필요함. '+q.ph;return}st.i++;save();render();window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'})};
+  $('#next').onclick=go;
+  if($('#back'))$('#back').onclick=()=>{keep();st.i--;save();render()};
+  if($('#skip'))$('#skip').onclick=()=>{st.a[q.k]={chips:[],text:''};st.i++;save();render()};
+  ta.onkeydown=e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing){e.preventDefault();go()}};
+  ta.focus();
+}
+function compile(){
+  const d=new Date();const ds=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  let s=`[덱 요청서 ${ds}]\n아래 답으로 디자인 프롬프트를 만들어 줘. 방식: 고른 사조의 실제 묘사문을 원문 구조 그대로 고쳐 쓰기. 붙여 넣는 프롬프트는 영어, 슬라이드 글은 한국어 문어체, 글꼴은 묘사에 맞게 영문과 한글을 짝지어 정하기.\n`;
+  Q.forEach((q,j)=>{const v=fmt(q.k);s+=`\n${j+1}. ${q.t}\n${v||'(비워 둠, 알아서 제안)'}\n`});
+  return s;
+}
+let DESC=null;
+async function loadDesc(){if(DESC)return DESC;const r=await fetch('desc.json');DESC=await r.json();return DESC}
+function hash(str){let h=2166136261;for(const c of str){h^=c.charCodeAt(0);h=Math.imul(h,16777619)}return h>>>0}
+function rng(seed){return()=>{seed=(seed+0x6D2B79F5)>>>0;let t=seed;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296}}
+const DEF={'발표 덱':['미니멀·개념','기하 추상·하드에지','색면 추상','정밀주의·미국 모더니즘','포스터·타이포'],'읽는 자료':['미니멀·개념','기하 추상·하드에지','정밀주의·미국 모더니즘','색면 추상','포스터·타이포'],'보고서':['미니멀·개념','기하 추상·하드에지','정밀주의·미국 모더니즘','색면 추상','포스터·타이포'],'방송 화면':['포스터·타이포','기하 추상·하드에지','미니멀·개념','오르피즘·구성주의·미래주의','사진'],'웹사이트':['기하 추상·하드에지','미니멀·개념','오르피즘·구성주의·미래주의','로고·기업 모더니즘','색면 추상'],'표지·포스터':['포스터·타이포','기하 추상·하드에지','색면 추상','팝아트','입체주의·콜라주']};
+const PRES={'투자 유치':['pitch-book','sequoia-pitch-deck'],'심사·평가':['mckinsey-style','pitch-book'],'의사결정':['bcg-style','mckinsey-style'],'정기 보고':['qbr','guide-to-the-markets'],'무대 발표':['keynote-minimal','ted-style'],'혼자 읽음':['six-pager','memo'],'강의':['seminar','keynote-minimal'],'방송':['ticker','guide-to-the-markets']};
+const GOOD=['사각형','격자','띠·선','글자·타이포','차트·숫자','추상'];
+function pickSources(){
+  const a1=ans('what').chips,a2=ans('purpose').chips,a6=ans('mood').chips;
+  let movs=(DEF[a1[0]]||DEF['발표 덱']).slice();
+  if(a6.includes('라이트')&&!movs.includes('사진'))movs[movs.length-1]='사진';
+  const R=rng(hash(JSON.stringify(st.a)+Date.now()%100000));
+  const cand=[];
+  movs.forEach(m=>{
+    let L=DESC.filter(o=>o.m===m).map(o=>({o,sc:(o.q?2:0)+o.s.filter(t=>GOOD.includes(t)).length-(o.s.includes('인물')?1:0)+R()*1.5}));
+    L.sort((x,y)=>y.sc-x.sc);
+    L.slice(0,3).forEach(x=>cand.push(x.o));
+  });
+  let slugs=[];a2.forEach(c=>(PRES[c]||[]).forEach(x=>{if(!slugs.includes(x))slugs.push(x)}));
+  if(a1.includes('방송 화면'))slugs.unshift('ticker');
+  slugs=[...new Set(slugs)];
+  if(!slugs.length)slugs=['keynote-minimal','mckinsey-style'];
+  const pres=slugs.slice(0,2).map(sl=>DESC.find(o=>o.id==='S'+sl)).filter(Boolean);
+  return {movs,cand,pres};
+}
+function buildInput(src){
+  const L=[];
+  L.push(`You write design prompts for slide decks, broadcast screens, web pages and covers. Follow this method exactly.
+
+METHOD
+1. From the CANDIDATE MOVEMENT DESCRIPTIONS below, choose exactly two descriptions from two different movements (you choose the movements; the user does not) whose structure and mood best fit what the request must show (planes, grids, rows, bands, a single hero form, rows of figures). Choose exactly one of the PRESENTATION DESCRIPTIONS below for slide rules.
+2. Rewrite each chosen description. Keep its number of sentences, their order and their sentence frames. Swap only the subject, color, material and position words so each sentence describes the requested screen. Never write a new description in your own words. Add function or motion only as one extra paragraph after a rewritten description.
+3. Wherever a source mentions any FORBIDDEN item, rewrite that phrase in place into its plain opposite (a rule becomes open space, a border becomes no border, a gradient becomes flat steps, a dot texture becomes a flat plane, gold or amber becomes another color).
+4. Assign each rewritten description to the slides or screens it governs. Use the user's slide list if given; if not, propose a slide list that fits the purpose and length.
+5. Pair fonts that suit the chosen descriptions: one Latin face and one Korean face for titles, the same or another pair for body, and a figure face when figures matter. Always list the Latin face first and the Korean face second, require loading every face, and state that Korean falling back to Arial, Malgun Gothic or Consolas is a failure. Do not default to Pretendard.
+6. Colors: one ground, a few neutrals stepped in lightness, one accent used in one place per slide. No amber or gold unless the user asked for it.
+
+FIXED RULES TO WRITE INTO THE PROMPT
+- Design comes before layout; every sentence of the rewritten descriptions must be visible on screen.
+- All on-screen text is Korean written style; titles are declarative conclusion sentences ending in '~함' or '~다', never '~습니다'; no parallel couplets, no slogan lines, no dashes; terms without a standard Korean form stay in English.
+- One chart per slide; every chart and table carries a source line.
+- FORBIDDEN: borders, boxes drawn with lines, band backgrounds, title underlines, rounded corners, pills, shadows, decorative gradients, glow, dots, dotted, dashed or hatched marks, halftone textures, decorative icons.
+- Build shapes in code. If any image model is used, the prompt must say the image contains no text, letters or numbers at all.
+- Never put artist names, artwork titles or museum names inside the prompt.
+- Use the user's placeholders as given; use {{발표자1}} style placeholders instead of real personal names unless the user wrote the name.
+
+OUTPUT
+Write the finished prompt in English, ready to paste, with these sections in order: the opening task line (format, size, slide count), [Color], [Typography], one section per rewritten description titled by the slides it governs (the rewritten sentences, then a short parenthesized implementation note), [Slide rules] from the presentation description, [Slides] (one line per slide with role, Korean title draft, exhibit), [Language of the slide text], [Forbidden], [Check], and a final line 'Fill the content from: [...]'.
+Output only the prompt text. No preamble, no explanation, no code fence.
+After the prompt, write one line '=== SOURCES ===' and then one line per source used: its ID, and which slides it governs.`);
+  L.push('\nUSER REQUEST (Korean answers to eight questions)\n'+Q.map((q,j)=>`${j+1}. ${q.t}\n${fmt(q.k)||'(blank: decide)'}`).join('\n\n'));
+  L.push('\nCANDIDATE MOVEMENT DESCRIPTIONS\n'+src.cand.map(o=>`[${o.id}] movement: ${o.m}\n${o.d}`).join('\n\n'));
+  L.push('\nPRESENTATION DESCRIPTIONS\n'+src.pres.map(o=>`[${o.id}] ${o.t}\n${o.d}`).join('\n\n'));
+  return L.join('\n');
+}
+let sampleFn=null,ctl=null,dbRef=null,qUnsub=null,QLIST=[];
+const split=t=>{const i=t.indexOf('=== SOURCES ===');return i<0?[t,'']:[t.slice(0,i).trim(),t.slice(i+15).trim()]};
+async function getDb(){if(dbRef)return dbRef;try{dbRef=await claude.use('db')}catch(e){dbRef=null}return dbRef}
+function showPrompt(prompt,srcLine,label){
+  const box=$('#result');box.style.display='';
+  $('#rlabel').textContent=label||'';$('#out').textContent=prompt;$('#src').textContent=srcLine||'';
+  $('#copy').onclick=async()=>{try{await navigator.clipboard.writeText(prompt);$('#rstatus').textContent='복사함.'}catch(e){const r=document.createRange();r.selectNodeContents($('#out'));const sel=getSelection();sel.removeAllRanges();sel.addRange(r);$('#rstatus').textContent='복사가 막혀 있어 선택해 둠. ⌘C로 복사할 것.'}};
+}
+function renderQueue(){
+  const el=$('#queue');if(!el)return;
+  if(!QLIST.length){el.innerHTML='';return}
+  el.innerHTML='<div class="qh">보낸 요청</div>'+QLIST.map(d=>{const v=d.data();const t=(v.title||'').slice(0,40);let when='';try{const d=new Date(v.createdAt);when=`${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`}catch(e){}const stt=v.status==='done'?'<b class="okc">완성</b>':'대기 중';return `<button class="qi" data-id="${esc(d.id)}"><span>${esc(when)}</span><span>${esc(t)}</span><span>${stt}</span></button>`}).join('');
+  el.querySelectorAll('.qi').forEach(bn=>bn.onclick=()=>{const d=QLIST.find(x=>x.id===bn.dataset.id);if(!d)return;const v=d.data();
+    if(v.status==='done'&&v.prompt){showPrompt(v.prompt,v.sources?('쓴 원문: '+v.sources):'', '대화방에서 만든 프롬프트');window.scrollTo({top:$('#result').offsetTop-24,behavior:'smooth'})}
+    else{$('#sstatus').textContent='아직 대기 중. 대화방에서 "요청 확인"이라고 하면 처리된다.'}});
+}
+async function watchQueue(){
+  const db=await getDb();if(!db||qUnsub)return;
+  const t=setTimeout(()=>{const s=$('#sstatus');if(s&&!QLIST.length)s.textContent=s.textContent||''},10000);
+  qUnsub=db.collection('requests').orderBy('createdAt','desc').limit(20).onSnapshot(snap=>{clearTimeout(t);QLIST=snap.docs;renderQueue();
+    const mine=QLIST[0];},e=>{clearTimeout(t)});
+}
+function renderSum(){
+  const text=compile(),url='https://claude.ai/new?q='+encodeURIComponent(text);
+  $('#stage').innerHTML=`<div class="sum" id="sum"><h2>요청 정리</h2><div class="hint" style="color:var(--slate)">'Claude에서 열기'를 누르면 이 요청이 새 Claude 대화에 채워진 채로 열린다. 열리지 않으면 복사해서 붙여 넣는다.</div>
+  <pre id="pre">${esc(text)}</pre>
+  <div class="row"><a class="btn main" id="open" href="${url}" target="_blank" rel="noopener" style="text-decoration:none">Claude에서 열기</a><button class="btn" id="copy">복사</button><button class="ghost" id="reset">처음부터</button></div>
+  <div class="status" id="status"></div></div>`;
+  const S=$('#status');
+  if(url.length>7000){$('#open').style.display='none';S.textContent='요청이 길어 링크로 넘길 수 없음. 복사해서 붙여 넣을 것.'}
+  $('#copy').onclick=async()=>{try{await navigator.clipboard.writeText(text);S.textContent='복사함.'}catch(e){const r=document.createRange();r.selectNodeContents($('#pre'));const sel=getSelection();sel.removeAllRanges();sel.addRange(r);S.textContent='복사가 막혀 있어 선택해 둠. ⌘C로 복사할 것.'}};
+  $('#reset').onclick=()=>{if(confirm('답을 모두 지우고 처음부터 할까요?')){st={i:0,a:{}};save();render()}};
+}
+render();
+</script>
+</body>
+</html>
