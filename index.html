@@ -227,7 +227,8 @@ function showWait(code,at){
   $('#stage').innerHTML=`<div class="wait" id="wait">
    <div class="kick">요청을 받았습니다</div>
    <div class="row" style="margin-top:6px"><button class="ghost" id="newreq">새 요청 쓰기</button></div>
-   <div class="think" id="think"><span id="tmsg">생각 중입니다</span><i>.</i><i>.</i><i>.</i></div>
+   <div class="mini" id="model" style="margin-top:22px;letter-spacing:.08em;color:var(--ice)">김병현 제작 모델 V1</div>
+   <div class="think" id="think" style="margin-top:8px"><span id="tmsg">해석 중</span><i>.</i><i>.</i><i>.</i></div>
    <div class="bar" id="bar"><b></b></div>
    <div class="mini" id="elapsed"></div><div class="mini" id="note"></div>
    <pre id="res" style="display:none"></pre>
@@ -236,15 +237,15 @@ function showWait(code,at){
   const t0=at||Date.now();
   const tick=()=>{const s=Math.floor((Date.now()-t0)/1000);$('#elapsed').textContent=`경과 ${Math.floor(s/60)}분 ${String(s%60).padStart(2,'0')}초`;
     if(s>180&&!$('#note').dataset.long){$('#note').dataset.long=1;$('#note').textContent='처리에 시간이 걸리고 있음. 창을 닫아도 되고, 이 브라우저로 다시 오면 결과가 보임.'}};
-  tick();tickT=setInterval(tick,1000);
-  const MSG={received:'생각 중입니다',processing:'디자인을 정리하는 중입니다',none:'요청을 찾는 중입니다'};
+  const STAGES=['해석 중','연산 중','결과 정리 중','생성 중'];
+  const stage=()=>{const s=Math.floor((Date.now()-t0)/1000);const m=$('#tmsg');if(m&&!$('#think').classList.contains('stop'))m.textContent=STAGES[Math.floor(s/6)%STAGES.length]};
+  tick();stage();tickT=setInterval(()=>{tick();stage()},1000);
   const poll=async()=>{
-    if(!STATUS_URL){$('#tmsg').textContent='생각 중입니다';$('#note').textContent=$('#note').textContent||'접수됨. 결과 확인 창구가 연결되면 여기에 결과가 나타남.';return}
+    if(!STATUS_URL){$('#note').textContent=$('#note').textContent||'접수됨. 결과 확인 창구가 연결되면 여기에 결과가 나타남.';return}
     try{
       const r=await fetch(STATUS_URL+'?code='+encodeURIComponent(code),{cache:'no-store'});const j=await r.json();
       if(j.status==='done'&&j.prompt){finish(code,j.prompt);return}
       if(j.status==='failed'){$('#tmsg').textContent='처리하지 못했습니다';$('#think').classList.add('stop');$('#bar').classList.add('stop');$('#note').textContent=j.message||'요청을 다시 보내 주세요.';stopTimers();return}
-      $('#tmsg').textContent=MSG[j.status]||MSG.received;
     }catch(e){$('#note').textContent='결과 확인 창구에 연결하지 못함. 잠시 뒤 다시 시도함.'}
     pollT=setTimeout(poll,15000);
   };
