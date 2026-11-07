@@ -27,6 +27,7 @@ h1{font-size:40px;font-weight:700;letter-spacing:-.02em;margin:10px 0 8px}
 .cur .hint{font-size:14.5px;color:var(--slate);margin-bottom:18px;white-space:pre-line}
 .chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
 .chip{font:inherit;font-size:15px;background:var(--steel);color:var(--ice);border:0;padding:8px 14px;cursor:pointer}
+.mpick{font:inherit;font-size:15px;border:0;padding:8px 14px;cursor:default;background:var(--violet);color:var(--night);font-weight:600}
 .chip.on{background:var(--violet);color:var(--night);font-weight:600}
 textarea{width:100%;min-height:96px;resize:vertical;font:inherit;color:var(--ice);background:var(--night);border:0;outline:0;padding:14px 16px;line-height:1.6}
 textarea:focus{background:#0A0E15}
@@ -74,7 +75,7 @@ textarea::placeholder{color:#56627C}
 <body>
 <div class="wrap">
   <div class="kick">DECK REQUEST</div>
-  <h1>덱 요청서</h1><div class="mini" style="margin:-2px 0 6px;color:var(--ice)">Claude Opus 5.5에 최적화됨.</div><div class="mini" style="margin:0 0 4px">결과가 나오면 본인 계정의 Claude Opus 5.5에 복사해 붙여 넣으시오.</div><div id="pend" style="margin:-4px 0 32px"></div>
+  <h1>덱 요청서</h1><div class="mini" style="margin:-2px 0 6px;color:var(--ice)">Claude Opus 5.5에 최적화됨.</div><div class="mini" style="margin:0 0 4px">결과가 나오면 본인 계정의 Claude Opus 5.5에 복사해 붙여 넣으시오.</div><div style="margin:14px 0 6px"><div class="kick" style="margin-bottom:8px">모델 선택</div><div class="chips"><button class="mpick" id="modelpick" aria-pressed="true">김병현 제작 모델 V1</button></div></div><div id="pend" style="margin:6px 0 32px"></div>
   <div class="prog" id="prog"></div>
   <div id="flow"></div>
   <div id="stage"></div>
