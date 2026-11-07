@@ -189,14 +189,24 @@ async function watchQueue(){
   qUnsub=db.collection('requests').orderBy('createdAt','desc').limit(20).onSnapshot(snap=>{clearTimeout(t);QLIST=snap.docs;renderQueue();
     const mine=QLIST[0];},e=>{clearTimeout(t)});
 }
+const FORM_URL='https://docs.google.com/forms/d/e/1FAIpQLSf9RwY_EAE6KwA-jn7nPnM1YfcVUOGpfXSV6egiB29Hxf0Qbw/formResponse';
+const FORM_FIELD='entry.632644792';
 function renderSum(){
   const text=compile();
-  $('#stage').innerHTML=`<div class="sum" id="sum"><h2>요청 복사</h2><div class="hint" style="color:var(--slate)">복사해서 Claude 대화방에 붙여 넣으면, 저장된 묘사문을 고쳐 쓴 영문 프롬프트로 돌려받는다.</div>
+  $('#stage').innerHTML=`<div class="sum" id="sum"><h2>요청 보내기</h2><div class="hint" style="color:var(--slate)">아래 내용이 그대로 전달된다. 위에서 '고치기'로 답을 바꿀 수 있다.</div>
   <pre id="pre">${esc(text)}</pre>
-  <div class="row"><button class="btn main" id="copy">복사</button><button class="ghost" id="reset">처음부터</button></div>
+  <div class="row"><button class="btn main" id="send">보내기</button><button class="btn" id="copy">복사</button><button class="ghost" id="reset">처음부터</button></div>
   <div class="status" id="status"></div></div>`;
-  const S=$('#status');
-  $('#copy').onclick=async()=>{try{await navigator.clipboard.writeText(text);S.textContent='복사함. 대화방에 붙여 넣으면 된다.'}catch(e){const r=document.createRange();r.selectNodeContents($('#pre'));const sel=getSelection();sel.removeAllRanges();sel.addRange(r);S.textContent='복사가 막혀 있어 선택해 둠. ⌘C로 복사할 것.'}};
+  const S=$('#status'),send=$('#send');
+  send.onclick=async()=>{
+    send.disabled=true;S.textContent='보내는 중';
+    try{
+      await fetch(FORM_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({[FORM_FIELD]:text}).toString()});
+      S.textContent='보냄. 요청이 접수됐다.';send.textContent='다시 보내기';
+    }catch(e){S.textContent='보내지 못함. 인터넷 연결을 확인하고 다시 누를 것.'}
+    finally{send.disabled=false}
+  };
+  $('#copy').onclick=async()=>{try{await navigator.clipboard.writeText(text);S.textContent='복사함.'}catch(e){const r=document.createRange();r.selectNodeContents($('#pre'));const sel=getSelection();sel.removeAllRanges();sel.addRange(r);S.textContent='복사가 막혀 있어 선택해 둠. ⌘C로 복사할 것.'}};
   $('#reset').onclick=()=>{if(confirm('답을 모두 지우고 처음부터 할까요?')){st={i:0,a:{}};save();render()}};
 }
 render();
