@@ -244,7 +244,7 @@ function showWait(code,at){
       if(j.status==='done'&&j.prompt){finish(code,j.prompt);return}
       if(j.status==='failed'){$('#tmsg').textContent='처리하지 못했습니다';$('#think').classList.add('stop');$('#bar').classList.add('stop');$('#note').textContent=j.message||'요청을 다시 보내 주세요.';stopTimers();return}
       $('#tmsg').textContent=MSG[j.status]||MSG.received;
-    }catch(e){}
+    }catch(e){$('#note').textContent='결과 확인 창구에 연결하지 못함. 잠시 뒤 다시 시도함.'}
     pollT=setTimeout(poll,15000);
   };
   poll();
@@ -300,6 +300,7 @@ function renderSum(){
   $('#reset').onclick=()=>{if(confirm('답을 모두 지우고 처음부터 할까요?')){st={i:0,a:{}};save();render()}};
 }
 render();
+{const l=pending().filter(x=>!x.done);if(l.length&&STATUS_URL)showWait(l[0].code,l[0].at)}
 </script>
 </body>
 </html>
