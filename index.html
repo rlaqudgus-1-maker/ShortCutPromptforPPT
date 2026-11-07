@@ -190,14 +190,13 @@ async function watchQueue(){
     const mine=QLIST[0];},e=>{clearTimeout(t)});
 }
 function renderSum(){
-  const text=compile(),url='https://claude.ai/new?q='+encodeURIComponent(text);
-  $('#stage').innerHTML=`<div class="sum" id="sum"><h2>요청 정리</h2><div class="hint" style="color:var(--slate)">'Claude에서 열기'를 누르면 이 요청이 새 Claude 대화에 채워진 채로 열린다. 열리지 않으면 복사해서 붙여 넣는다.</div>
+  const text=compile();
+  $('#stage').innerHTML=`<div class="sum" id="sum"><h2>요청 복사</h2><div class="hint" style="color:var(--slate)">복사해서 Claude 대화방에 붙여 넣으면, 저장된 묘사문을 고쳐 쓴 영문 프롬프트로 돌려받는다.</div>
   <pre id="pre">${esc(text)}</pre>
-  <div class="row"><a class="btn main" id="open" href="${url}" target="_blank" rel="noopener" style="text-decoration:none">Claude에서 열기</a><button class="btn" id="copy">복사</button><button class="ghost" id="reset">처음부터</button></div>
+  <div class="row"><button class="btn main" id="copy">복사</button><button class="ghost" id="reset">처음부터</button></div>
   <div class="status" id="status"></div></div>`;
   const S=$('#status');
-  if(url.length>7000){$('#open').style.display='none';S.textContent='요청이 길어 링크로 넘길 수 없음. 복사해서 붙여 넣을 것.'}
-  $('#copy').onclick=async()=>{try{await navigator.clipboard.writeText(text);S.textContent='복사함.'}catch(e){const r=document.createRange();r.selectNodeContents($('#pre'));const sel=getSelection();sel.removeAllRanges();sel.addRange(r);S.textContent='복사가 막혀 있어 선택해 둠. ⌘C로 복사할 것.'}};
+  $('#copy').onclick=async()=>{try{await navigator.clipboard.writeText(text);S.textContent='복사함. 대화방에 붙여 넣으면 된다.'}catch(e){const r=document.createRange();r.selectNodeContents($('#pre'));const sel=getSelection();sel.removeAllRanges();sel.addRange(r);S.textContent='복사가 막혀 있어 선택해 둠. ⌘C로 복사할 것.'}};
   $('#reset').onclick=()=>{if(confirm('답을 모두 지우고 처음부터 할까요?')){st={i:0,a:{}};save();render()}};
 }
 render();
