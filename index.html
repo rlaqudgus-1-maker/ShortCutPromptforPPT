@@ -73,7 +73,7 @@ textarea::placeholder{color:#56627C}
 <body>
 <div class="wrap">
   <div class="kick">DECK REQUEST</div>
-  <h1>덱 요청서</h1><div id="pend" style="margin:-4px 0 32px"></div>
+  <h1>덱 요청서</h1><div class="mini" style="margin:-2px 0 6px;color:var(--ice)">Claude Opus 5.5에 최적화됨.</div><div class="mini" style="margin:0 0 4px">결과가 나오면 본인 계정의 Claude Opus 5.5에 복사해 붙여 넣으시오.</div><div id="pend" style="margin:-4px 0 32px"></div>
   <div class="prog" id="prog"></div>
   <div id="flow"></div>
   <div id="stage"></div>
@@ -229,7 +229,7 @@ function showWait(code,at){
    <div class="bar" id="bar"><b></b></div>
    <div class="mini" id="elapsed"></div><div class="mini" id="note"></div>
    <pre id="res" style="display:none"></pre>
-   <div class="row" id="rrow" style="display:none"><button class="btn main" id="rcopy">프롬프트 복사</button><span class="status" id="rst" style="margin:0"></span></div></div>`;
+   <div class="mini" id="rhint" style="display:none;color:var(--ice)">아래 프롬프트를 복사해 본인 계정의 Claude Opus 5.5에 붙여 넣으시오.</div><div class="row" id="rrow" style="display:none"><button class="btn main" id="rcopy">프롬프트 복사</button><span class="status" id="rst" style="margin:0"></span></div></div>`;
   $('#newreq').onclick=()=>{stopTimers();st={i:0,a:{}};save();render()};
   const t0=at||Date.now();
   const tick=()=>{const s=Math.floor((Date.now()-t0)/1000);$('#elapsed').textContent=`경과 ${Math.floor(s/60)}분 ${String(s%60).padStart(2,'0')}초`;
@@ -250,7 +250,7 @@ function showWait(code,at){
 }
 function finish(code,prompt){
   stopTimers();$('#tmsg').textContent='완성되었습니다';$('#think').classList.add('stop');$('#bar').classList.add('stop');$('#note').textContent='';
-  const res=$('#res');res.style.display='';res.textContent=prompt;$('#rrow').style.display='';
+  $('#rhint').style.display='';const res=$('#res');res.style.display='';res.textContent=prompt;$('#rrow').style.display='';
   $('#rcopy').onclick=async()=>{try{await navigator.clipboard.writeText(prompt);$('#rst').textContent='복사함.'}catch(e){const r=document.createRange();r.selectNodeContents(res);const sel=getSelection();sel.removeAllRanges();sel.addRange(r);$('#rst').textContent='선택해 둠. ⌘C로 복사할 것.'}};
   setPending(pending().map(x=>x.code===code?{...x,done:true}:x));
 }
